@@ -1,7 +1,4 @@
 # Ignore files and directories that are not relevant to the project
 .DS_Store
 __trash__/
-*.local.md
-
-# Ignore Jupyter Notebook markdown files
-lora_training.md
+*.md
