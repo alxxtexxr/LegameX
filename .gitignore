@@ -1,4 +1,7 @@
 # Ignore files and directories that are not relevant to the project
 .DS_Store
 __trash__/
+eval/
 *.md
+*.local.*
+*.zip
