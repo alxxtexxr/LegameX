@@ -4,4 +4,5 @@ __trash__/
 eval/
 *.md
 *.local.*
+*.custom.*
 *.zip
