@@ -1,7 +1,7 @@
 # Ignore files and directories that are not relevant to the project
 .DS_Store
 .vscode/
-__trash__/
+__*__/
 eval/
 *.md
 *.local.*
