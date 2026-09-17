@@ -1,0 +1,8 @@
+defaults:
+  - wikipedia-en-10K
+  - _self_
+
+train:
+  num_epochs: 1
+  report_to: "none"
+  push_to_hub: false

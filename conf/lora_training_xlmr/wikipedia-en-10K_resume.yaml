@@ -1,0 +1,7 @@
+defaults:
+  - wikipedia-en-10K
+  - _self_
+
+resume:
+  model_id: "<resume_model_id>"
+  ckpt_step: 99999
