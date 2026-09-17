@@ -1,8 +1,12 @@
 # Ignore files and directories that are not relevant to the project
 .DS_Store
 .vscode/
+.venv/
+.ruff_cache/
 __*__/
 eval/
+outputs*/
+wandb/
 *.md
 *.local.*
 *.custom.*
