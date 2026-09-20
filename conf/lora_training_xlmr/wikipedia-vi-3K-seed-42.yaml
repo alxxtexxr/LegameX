@@ -1,5 +1,5 @@
 task: "wikipedia"
-lang: "en"
+lang: "vi"
 
 seed: 42
 device: "auto" # "auto" will use the best available device (CUDA > MPS > CPU)
@@ -8,8 +8,8 @@ model_id: "FacebookAI/xlm-roberta-base"
 model_name: "XLM-R-Base"
 
 lora:
-  rank: 16
-  alpha: 16
+  rank: 8
+  alpha: 8
   dropout: 0.1
   target_modules: [
     # Not "all-linear", since we exclude "qa_outputs" for question answering tasks
@@ -22,22 +22,22 @@ lora:
   ]
 
 data:
-  train_size: 10000
-  val_size: 2500
+  train_size: 3000
+  val_size: 750
   mlm_prob: 0.15
 
 train:
   mini_batch_size: 4
   grad_accum_steps: 4
   num_epochs: 3
-  lr: 2e-4
+  lr: 1e-4
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   max_grad_norm: 1.0
   weight_decay: 0.01
-  warmup_steps: 100
-  eval_steps: 200
-  save_steps: 200
+  warmup_steps: 50
+  eval_steps: 100
+  save_steps: 100
   logging_steps: 50
   report_to: ["tensorboard", "wandb"]
   push_to_hub: true
