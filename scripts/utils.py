@@ -12,11 +12,11 @@ def to_list(val):
 
 
 def load_train_val_datasets(
-    lang,  # e.g., 'en' | 'ja' | 'id'
-    task,  # 'wikipedia' | 'squad'
-    train_size,
-    val_size,
-):
+    lang: str,  # e.g., 'en' | 'ja' | 'id'
+    task: str,  # 'wikipedia' | 'squad'
+    train_size: int,
+    val_size: int,
+) -> tuple[Dataset, Dataset]:
     # Validate that if the task is 'squad', the language must be 'en'
     if task == "squad":
         assert lang == "en", "SQuAD is English-only."

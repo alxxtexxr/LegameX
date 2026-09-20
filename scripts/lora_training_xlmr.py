@@ -1,6 +1,7 @@
 import math
 import os
 from datetime import datetime
+from typing import cast
 
 import hydra
 from omegaconf import DictConfig
@@ -39,7 +40,7 @@ def main(cfg: DictConfig):
     print("Device:", cfg.device)
 
     # Resume training configuration
-    resume_from_checkpoint = bool(cfg.resume.model_id)
+    resume_from_checkpoint = None
     if resume_from_checkpoint:
         model_name = cfg.resume.model_id
         run_name = model_name.split("/")[-1]
@@ -109,8 +110,8 @@ def main(cfg: DictConfig):
     if resume_from_checkpoint:
         # Load the LoRA adapter from the checkpoint and ensure it's in training mode
         model = PeftModel.from_pretrained(model, resume_from_checkpoint)
-        model.inference_mode = False  # Disable inference-only flag
-        model.enable_adapter_layers()  # Explicitly unfreeze LoRA weights
+        model.train()                   # Ensure the resumed model is in training mode
+        model.enable_adapter_layers()   # Explicitly unfreeze LoRA weights
     else:
         # Set up a LoRA configuration and apply it to the model
         lora_config = LoraConfig(
@@ -122,6 +123,7 @@ def main(cfg: DictConfig):
             target_modules=to_list(cfg.lora.target_modules),
         )
         model = get_peft_model(model, lora_config)
+        model = cast(PeftModel, model)  # Explicitly cast to PeftModel
     device = get_device(cfg.device)
     model = model.to(device)
     model.print_trainable_parameters()
