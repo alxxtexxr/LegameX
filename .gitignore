@@ -6,6 +6,7 @@
 __*__/
 eval/
 outputs*/
+logs/
 wandb/
 *.md
 *.local.*
