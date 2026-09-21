@@ -1,3 +1,5 @@
+config_name: "wikipedia-en-2K-s42"
+
 task: "wikipedia"
 lang: "en"
 
@@ -13,9 +15,9 @@ lora:
   dropout: 0.1
   target_modules: [
     # Not "all-linear", since we exclude "qa_outputs" for question answering tasks
-    "query", 
-    "key", 
-    "value", 
+    "query",
+    "key",
+    "value",
     # Not all "dense" layers, since we exclude "lm_head.dense" for masked language modeling
     "intermediate.dense",
     "output.dense",
@@ -30,14 +32,17 @@ train:
   mini_batch_size: 4
   grad_accum_steps: 4
   num_epochs: 3
+  max_steps: null
   lr: 1e-4
   lr_scheduler_type: "cosine"
   optim: "adamw_8bit"
   max_grad_norm: 1.0
   weight_decay: 0.01
   warmup_steps: 50
+  eval_strategy: "steps"
   eval_steps: 100
   save_steps: 100
+  load_best_model_at_end: true
   logging_steps: 50
   report_to: ["tensorboard", "wandb"]
   push_to_hub: true
