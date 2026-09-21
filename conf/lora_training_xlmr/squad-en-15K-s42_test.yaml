@@ -1,0 +1,14 @@
+config_name: "squad-en-15K-s42_test"
+
+defaults:
+  - squad-en-15K-s42
+  - _self_
+
+train:
+  max_steps: 10
+  mini_batch_size: 1
+  grad_accum_steps: 1
+  eval_strategy: "no"
+  load_best_model_at_end: false
+  report_to: "none"
+  push_to_hub: false
