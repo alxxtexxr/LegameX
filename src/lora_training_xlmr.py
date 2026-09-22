@@ -1,5 +1,6 @@
 import os
 import math
+import logging
 from datetime import datetime
 from typing import cast
 
@@ -21,13 +22,14 @@ from transformers import (
     TrainingArguments,
 )
 from utils import (
-    to_list, 
-    load_train_val_datasets, 
+    to_list,
+    load_train_val_datasets,
     preprocess_train_val_datasets,
-    get_device, 
-    get_amp_config, 
+    get_device,
+    get_amp_config,
     get_optim,
     compute_metrics_squad,
+    capture_to_log,
 )
 
 WIKI_MAX_LENGTH = 510  # 510 + 2 (BOS + EOS) = 512, matching XLM-R's max_position_embeddings
@@ -40,18 +42,29 @@ NUM_CHUNKS_PER_WIKI_ARTICLE = 3
     config_name="wikipedia-en-10K",
 )
 def main(cfg: DictConfig):
-    start_time = datetime.now()
-    print("================================================================")
-    print(f"Starting: {start_time}")
-    print(f"Configuration name: {cfg.config_name}")
-    print("================================================================")
+    log = logging.getLogger(__name__)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    print()
-    print("================================================================")
-    print("Configuration")
-    print("================================================================")
-    print("Seed:", cfg.seed)
-    print("Device:", cfg.device)
+    # Replace Hydra's default console handler with a cleaner format
+    root = logging.getLogger()
+    for h in root.handlers[:]:
+        if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler):
+            root.removeHandler(h)
+    console = logging.StreamHandler()
+    console.setFormatter(logging.Formatter("%(message)s"))
+    root.addHandler(console)
+
+    log.info("================================================================")
+    log.info(f"Starting training: {cfg.config_name}")
+    log.info(f"Timestamp: {datetime.now()}")
+    log.info("================================================================")
+
+    log.info("")
+    log.info("================================================================")
+    log.info("Configuration")
+    log.info("================================================================")
+    log.info(f"Seed: {cfg.seed}")
+    log.info(f"Device: {cfg.device}")
 
     # Resume training configuration
     resume_from_checkpoint = None
@@ -85,16 +98,16 @@ def main(cfg: DictConfig):
     base_hub_model_id, version = hub_model_id.rsplit("-v", 1)
     hub_merged_model_id = f"{base_hub_model_id}-Merged-v{version}"
 
-    print("Resume from checkpoint:", resume_from_checkpoint)
-    print("Model name:", model_name)
-    print("Run name:", run_name)
-    print("Hub model ID:", hub_model_id)
-    print("Hub merged model ID:", hub_merged_model_id)
+    log.info(f"Resume from checkpoint: {resume_from_checkpoint}")
+    log.info(f"Model name: {model_name}")
+    log.info(f"Run name: {run_name}")
+    log.info(f"Hub model ID: {hub_model_id}")
+    log.info(f"Hub merged model ID: {hub_merged_model_id}")
 
-    print()
-    print("================================================================")
-    print("Model")
-    print("================================================================")
+    log.info("")
+    log.info("================================================================")
+    log.info("Model")
+    log.info("================================================================")
     # Load the tokenizer
     tokenizer = AutoTokenizer.from_pretrained(cfg.model_id)
 
@@ -136,13 +149,14 @@ def main(cfg: DictConfig):
         model = cast(PeftModel, model)  # Explicitly cast to PeftModel
     device = get_device(cfg.device)
     model = model.to(device)
-    model.print_trainable_parameters()
-    print("device:", model.device)
+    with capture_to_log():
+        model.print_trainable_parameters()
+    log.info(f"device: {model.device}")
 
-    print()
-    print("================================================================")
-    print("Data")
-    print("================================================================")
+    log.info("")
+    log.info("================================================================")
+    log.info("Data")
+    log.info("================================================================")
     # Load the dataset
     train_dataset, val_dataset = load_train_val_datasets(
         lang=cfg.lang,
@@ -151,11 +165,11 @@ def main(cfg: DictConfig):
         val_size=cfg.data.val_size,
     )
 
-    print("Train dataset:")
-    print(train_dataset)
-    print()
-    print("Validation dataset:")
-    print(val_dataset)
+    log.info("Train dataset:")
+    log.info(train_dataset)
+    log.info("")
+    log.info("Validation dataset:")
+    log.info(val_dataset)
 
     # Preprocess the dataset
     train_dataset, val_dataset = preprocess_train_val_datasets(
@@ -167,38 +181,42 @@ def main(cfg: DictConfig):
         wiki_max_length=WIKI_MAX_LENGTH,
         num_chunks_per_wiki_article=NUM_CHUNKS_PER_WIKI_ARTICLE,
     )
-    
-    if cfg.task == "wikipedia":
-        print("Total Wikipedia chunks:", len(train_dataset))
 
-    print()
-    print("================================================================")
-    print("Training")
-    print("================================================================")
+    if cfg.task == "wikipedia":
+        log.info(f"Total Wikipedia chunks: {len(train_dataset)}")
+
+    log.info("")
+    log.info("================================================================")
+    log.info("Training")
+    log.info("================================================================")
     if isinstance(cfg.train.max_steps, int):
         # Manually set the maximum number of steps
         max_steps = cfg.train.max_steps
-        print(f"Max steps: {max_steps} (manually set from configuration)")
+        log.info(f"Max steps: {max_steps} (manually set from configuration)")
     else:
         # Calculate the maximum number of steps
         steps_per_epoch = math.ceil(len(train_dataset) / (cfg.train.mini_batch_size * cfg.train.grad_accum_steps))
         max_steps = steps_per_epoch * cfg.train.num_epochs
-        print("Steps per epoch:", steps_per_epoch)
-        print("Max steps:", max_steps)
+        log.info(f"Steps per epoch: {steps_per_epoch}")
+        log.info(f"Max steps: {max_steps}")
 
     # Set up the output directory
     output_dir = os.path.join(os.getcwd(), "outputs_training", run_name)
-    os.makedirs(output_dir, exist_ok=True)
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except OSError as e:
+        log.error(f"Failed to create output directory {output_dir}: {e}")
+        raise
 
     # Set up the training arguments
     bf16, fp16 = get_amp_config(device)
     optim = get_optim(cfg.train.optim, device)
     report_to = to_list(cfg.train.report_to)
-    
-    print(f"AMP: bf16={bf16}, fp16={fp16}")
-    print(f"Optimizer: {optim} (configuration was: {cfg.train.optim})")
-    print("Report to:", report_to)
-    
+
+    log.info(f"AMP: bf16={bf16}, fp16={fp16}")
+    log.info(f"Optimizer: {optim} (configuration was: {cfg.train.optim})")
+    log.info(f"Report to: {report_to}")
+
     # Initialize wandb
     if "wandb" in report_to:
         import wandb
@@ -206,7 +224,7 @@ def main(cfg: DictConfig):
             project="legamex",
             name=run_name,
         )
-    
+
     # Set up a trainer
     train_args = TrainingArguments(
         # Training arguments
@@ -269,14 +287,16 @@ def main(cfg: DictConfig):
     trainer.label_names = label_names
 
     # Start training
-    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+    with capture_to_log():
+        trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
     # If the task is SQuAD, upload the merged model and tokenizer
     if cfg.task == "squad" and cfg.train.push_to_hub:
-        print()
-        print("================================================================")
-        print("Merging and Uploading")
-        print("================================================================")    
+        with capture_to_log():
+            print()
+            print("================================================================")
+            print("Merging and Uploading")
+            print("================================================================")
         # After the training finishes, merge the LoRA into the base model and save everything
         model = model.eval()  # Good practice
         merged_model = model.merge_and_unload()
@@ -285,15 +305,12 @@ def main(cfg: DictConfig):
         merged_model.push_to_hub(hub_merged_model_id)
         tokenizer.push_to_hub(hub_merged_model_id)
 
-        print(f"Merged model uploaded to: https://huggingface.co/{hub_merged_model_id}")
+        log.info(f"Merged model uploaded to: https://huggingface.co/{hub_merged_model_id}")
 
-    end_time = datetime.now()
-    elapsed = end_time - start_time
-    print()
-    print("================================================================")
-    print(f"Finished: {end_time}")
-    print(f"Elapsed: {elapsed}")
-    print("================================================================")
+    log.info("")
+    log.info("================================================================")
+    log.info(f"Finished: {datetime.now()}")
+    log.info("================================================================")
 
 
 if __name__ == "__main__":

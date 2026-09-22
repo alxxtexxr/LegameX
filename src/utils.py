@@ -1,10 +1,63 @@
 import ast
+import logging
 import random
+import sys
+from contextlib import contextmanager
 
 import numpy as np
 import torch
 from datasets import Dataset, load_dataset
 from omegaconf import ListConfig
+
+
+@contextmanager
+def capture_to_log():
+    """Redirect stdout so print() output also goes to the Hydra log file."""
+    class _Tee:
+        def __init__(self, original, file_handler):
+            self._original = original
+            self._file = file_handler.stream
+            self._formatter = file_handler.formatter or logging.Formatter()
+            # Create a record-like object so we can reuse the file handler's formatter
+            self._record = logging.LogRecord(
+                name="__main__", level=logging.INFO,
+                pathname="", lineno=0, msg="", args=(), exc_info=None,
+            )
+
+        def write(self, s):
+            self._original.write(s)
+            if s.strip():  # skip blank newlines to avoid double-spacing
+                self._record.msg = s.rstrip("\n")
+                self._record.args = ()
+                formatted = self._formatter.format(self._record)
+                self._file.write(formatted + "\n")
+                self._file.flush()
+
+        def flush(self):
+            self._original.flush()
+            self._file.flush()
+
+        def __getattr__(self, name):
+            return getattr(self._original, name)
+
+    # Find the Hydra file handler on the root logger
+    file_handler = None
+    for h in logging.getLogger().handlers:
+        if isinstance(h, logging.FileHandler):
+            file_handler = h
+            break
+
+    if file_handler is None:
+        yield  # no file handler, nothing to capture
+        return
+
+    original = sys.stdout
+    assert file_handler is not None  # guaranteed by early return above
+    sys.stdout = _Tee(original, file_handler)
+    try:
+        yield
+    finally:
+        sys.stdout = original
 
 
 def to_list(val):
@@ -106,7 +159,7 @@ def preprocess_train_val_datasets(
     val_dataset: Dataset,
     tokenizer,
     seed: int,
-    
+
     # Wikipedia dataset configuration
     wiki_max_length: int = 510,  # 510 + 2 (BOS + EOS) = 512, matching XLM-R's max_position_embeddings
     num_chunks_per_wiki_article: int = 3,
@@ -383,7 +436,10 @@ def compute_metrics_squad(eval_pred):
             pred_start, pred_end = pred_end, pred_start
 
         # Exact Match: both start and end must match exactly
-        em_scores.append(float(pred_start == true_start and pred_end == true_end))  # noqa: try-except — float() on a bool is safe
+        try:
+            em_scores.append(float(pred_start == true_start and pred_end == true_end))
+        except (ValueError, TypeError):
+            em_scores.append(0.0)
 
         predicted_tokens = set(range(pred_start, pred_end + 1))
         true_tokens = set(range(true_start, true_end + 1))
