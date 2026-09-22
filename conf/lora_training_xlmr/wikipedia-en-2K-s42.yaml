@@ -35,7 +35,7 @@ data:
 train:
   mini_batch_size: 4
   grad_accum_steps: 4
-  num_epochs: 3
+  num_epochs: 5
   max_steps: null
   lr: 1e-4
   lr_scheduler_type: "cosine"
@@ -50,7 +50,7 @@ train:
   logging_steps: 50
   report_to: ["tensorboard", "wandb"]
   push_to_hub: true
-  early_stopping_patience: 3
+  early_stopping_patience: 5
 
 resume:
   model_id: null
