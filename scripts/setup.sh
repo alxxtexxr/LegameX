@@ -70,13 +70,13 @@ info "Python dependencies installed"
 # ─── Step 3: Login Hugging Face ──────────────────────────────────────────────
 info "Configuring Hugging Face..."
 git config --global credential.helper store
-hf auth login --add-to-git-credential --token "$HF_TOKEN"
+uv run hf auth login --add-to-git-credential --token "$HF_TOKEN"
 info "Hugging Face logged in"
 
 # ─── Step 4: Login wandb (optional) ──────────────────────────────────────────
 if [[ -n "$WANDB_KEY" ]]; then
     info "Logging in to Weights & Biases..."
-    wandb login "$WANDB_KEY"
+    uv run wandb login "$WANDB_KEY"
     info "wandb logged in"
 else
     warn "Skipping wandb login (no --wandb-key provided)"
@@ -85,7 +85,7 @@ fi
 # ─── Step 5: Set Vast.ai API key (optional) ──────────────────────────────────
 if [[ -n "$VASTAI_KEY" ]]; then
     info "Setting Vast.ai API key..."
-    vastai set api-key "$VASTAI_KEY"
+    uv run vastai set api-key "$VASTAI_KEY"
     info "Vast.ai API key set"
 else
     warn "Skipping Vast.ai API key (no --vastai-key provided)"
