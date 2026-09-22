@@ -21,7 +21,7 @@ SESSION_NAME="$(basename "$0" .sh)"
 stop_vastai_instance() {
   if [ -n "$VASTAI_ID" ]; then
     echo "Stopping vastai instance $VASTAI_ID..."
-    output=$(vastai stop instance "$VASTAI_ID" 2>&1)
+    output=$(uv run vastai stop instance "$VASTAI_ID" 2>&1)
     echo "$output"
     if echo "$output" | grep -qi 'error\|failed'; then
       echo "Failed to stop instance $VASTAI_ID."
@@ -34,7 +34,7 @@ stop_vastai_instance() {
 if [ "$BACKGROUND" = true ]; then
   STOP_CMD=""
   if [ -n "$VASTAI_ID" ]; then
-    STOP_CMD="output=\$(vastai stop instance $VASTAI_ID 2>&1); echo \"\$output\"; if echo \"\$output\" | grep -qi 'error|failed'; then echo 'Failed to stop instance $VASTAI_ID.'; else echo 'Instance $VASTAI_ID stopped.'; fi"
+    STOP_CMD="output=\$(uv run vastai stop instance $VASTAI_ID 2>&1); echo \"\$output\"; if echo \"\$output\" | grep -qi 'error|failed'; then echo 'Failed to stop instance $VASTAI_ID.'; else echo 'Instance $VASTAI_ID stopped.'; fi"
   fi
   tmux new-session -d -s "$SESSION_NAME" "uv run python src/lora_training_xlmr.py --config-name=squad-en-15K-s42; $STOP_CMD; exec bash"
   echo "Started in tmux session: $SESSION_NAME"
