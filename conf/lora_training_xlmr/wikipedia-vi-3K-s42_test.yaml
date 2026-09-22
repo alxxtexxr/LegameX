@@ -1,5 +1,9 @@
 config_name: "wikipedia-vi-3K-s42_test"
 
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
 defaults:
   - wikipedia-vi-3K-s42
   - _self_

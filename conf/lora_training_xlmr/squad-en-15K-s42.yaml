@@ -1,5 +1,9 @@
 config_name: "squad-en-15K-s42"
 
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
 task: "squad"
 lang: "en"
 
@@ -14,11 +18,11 @@ lora:
   alpha: 8
   dropout: 0.1
   target_modules: [
-    # Not "all-linear", since we exclude "qa_outputs" for question answering tasks
+    # Not "all-linear" - exclude "qa_outputs" for QA
     "query",
     "key",
     "value",
-    # Not all "dense" layers, since we exclude "lm_head.dense" for masked language modeling
+    # Not all "dense" - exclude "lm_head.dense" for MLM
     "intermediate.dense",
     "output.dense",
   ]

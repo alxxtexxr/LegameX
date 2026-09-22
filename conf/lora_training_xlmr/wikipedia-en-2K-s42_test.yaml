@@ -1,5 +1,9 @@
 config_name: "wikipedia-en-2K-s42_test"
 
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
 defaults:
   - wikipedia-en-2K-s42
   - _self_
