@@ -20,6 +20,7 @@ Required:
   --hf-token <HF_TOKEN>       Hugging Face token
 
 Optional:
+  --with-tools                Also install tmux and fish (runs install-tools.sh)
   --wandb-key <WANDB_KEY>     Weights & Biases API key
   --vastai-key <VASTAI_KEY>   Vast.ai API key
   -h, --help                  Show this help message
@@ -30,10 +31,12 @@ EOF
 HF_TOKEN=""
 WANDB_KEY=""
 VASTAI_KEY=""
+INSTALL_TOOLS=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --hf-token)    HF_TOKEN="$2";   shift 2 ;;
+        --with-tools)  INSTALL_TOOLS=true; shift ;;
         --wandb-key)   WANDB_KEY="$2";  shift 2 ;;
         --vastai-key)  VASTAI_KEY="$2"; shift 2 ;;
         -h|--help)     usage ;;
@@ -46,7 +49,16 @@ if [[ -z "$HF_TOKEN" ]]; then
     usage
 fi
 
-# ─── Step 1: Install Python dependencies with uv ─────────────────────────────
+# ─── Step 1: Install tools (optional) ───────────────────────────────────────
+if [[ "$INSTALL_TOOLS" == true ]]; then
+    info "Running install-tools.sh..."
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    bash "$SCRIPT_DIR/install-tools.sh"
+else
+    warn "Skipping tool installation (pass --with-tools to include)"
+fi
+
+# ─── Step 2: Install Python dependencies with uv ─────────────────────────────
 info "Installing Python dependencies with uv..."
 if ! command -v uv &>/dev/null; then
     error "uv is not installed. Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh"
@@ -55,13 +67,13 @@ fi
 uv sync
 info "Python dependencies installed"
 
-# ─── Step 2: Login Hugging Face ──────────────────────────────────────────────
+# ─── Step 3: Login Hugging Face ──────────────────────────────────────────────
 info "Configuring Hugging Face..."
 git config --global credential.helper store
 hf auth login --add-to-git-credential --token "$HF_TOKEN"
 info "Hugging Face logged in"
 
-# ─── Step 3: Login wandb (optional) ──────────────────────────────────────────
+# ─── Step 4: Login wandb (optional) ──────────────────────────────────────────
 if [[ -n "$WANDB_KEY" ]]; then
     info "Logging in to Weights & Biases..."
     wandb login "$WANDB_KEY"
@@ -70,7 +82,7 @@ else
     warn "Skipping wandb login (no --wandb-key provided)"
 fi
 
-# ─── Step 4: Set Vast.ai API key (optional) ──────────────────────────────────
+# ─── Step 5: Set Vast.ai API key (optional) ──────────────────────────────────
 if [[ -n "$VASTAI_KEY" ]]; then
     info "Setting Vast.ai API key..."
     vastai set api-key "$VASTAI_KEY"
