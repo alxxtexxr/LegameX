@@ -97,7 +97,7 @@ def main(cfg: DictConfig):
 
         hub_model_id = f"{username}/{run_name}"
     base_hub_model_id, version = hub_model_id.rsplit("-v", 1)
-    hub_merged_model_id = f"{base_hub_model_id}-Merged-v{version}"
+    hub_merged_model_id = f"{base_hub_model_id}-mrg-v{version}"
 
     log.info(f"Resume from checkpoint: {resume_from_checkpoint}")
     log.info(f"Model name: {model_name}")
