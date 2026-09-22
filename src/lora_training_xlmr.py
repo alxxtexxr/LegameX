@@ -54,9 +54,10 @@ def main(cfg: DictConfig):
     console.setFormatter(logging.Formatter("%(message)s"))
     root.addHandler(console)
 
+    start_time = datetime.now()
     log.info("================================================================")
-    log.info(f"Starting training: {cfg.config_name}")
-    log.info(f"Timestamp: {datetime.now()}")
+    log.info(f"Starting: {start_time}")
+    log.info(f"Configuration name: {cfg.config_name}")
     log.info("================================================================")
 
     log.info("")
@@ -292,11 +293,10 @@ def main(cfg: DictConfig):
 
     # If the task is SQuAD, upload the merged model and tokenizer
     if cfg.task == "squad" and cfg.train.push_to_hub:
-        with capture_to_log():
-            print()
-            print("================================================================")
-            print("Merging and Uploading")
-            print("================================================================")
+        log.info("")
+        log.info("================================================================")
+        log.info("Merging and Uploading")
+        log.info("================================================================")
         # After the training finishes, merge the LoRA into the base model and save everything
         model = model.eval()  # Good practice
         merged_model = model.merge_and_unload()
@@ -307,9 +307,12 @@ def main(cfg: DictConfig):
 
         log.info(f"Merged model uploaded to: https://huggingface.co/{hub_merged_model_id}")
 
+    end_time = datetime.now()
+    elapsed = end_time - start_time
     log.info("")
     log.info("================================================================")
-    log.info(f"Finished: {datetime.now()}")
+    log.info(f"Finished: {end_time}")
+    log.info(f"Elapsed: {elapsed}")
     log.info("================================================================")
 
 
