@@ -46,23 +46,7 @@ if [[ -z "$HF_TOKEN" ]]; then
     usage
 fi
 
-# ─── Step 1: Install tmux ────────────────────────────────────────────────────
-info "Installing tmux..."
-if command -v tmux &>/dev/null; then
-    info "tmux already installed ($(tmux -V))"
-else
-    if command -v brew &>/dev/null; then
-        brew install tmux
-    elif command -v apt-get &>/dev/null; then
-        sudo apt-get update && sudo apt-get install -y tmux
-    else
-        error "No supported package manager found. Install tmux manually."
-        exit 1
-    fi
-    info "tmux installed"
-fi
-
-# ─── Step 2: Install Python dependencies with uv ─────────────────────────────
+# ─── Step 1: Install Python dependencies with uv ─────────────────────────────
 info "Installing Python dependencies with uv..."
 if ! command -v uv &>/dev/null; then
     error "uv is not installed. Install it with: curl -LsSf https://astral.sh/uv/install.sh | sh"
@@ -71,13 +55,13 @@ fi
 uv sync
 info "Python dependencies installed"
 
-# ─── Step 3: Login Hugging Face ──────────────────────────────────────────────
+# ─── Step 2: Login Hugging Face ──────────────────────────────────────────────
 info "Configuring Hugging Face..."
 git config --global credential.helper store
 hf auth login --add-to-git-credential --token "$HF_TOKEN"
 info "Hugging Face logged in"
 
-# ─── Step 4: Login wandb (optional) ──────────────────────────────────────────
+# ─── Step 3: Login wandb (optional) ──────────────────────────────────────────
 if [[ -n "$WANDB_KEY" ]]; then
     info "Logging in to Weights & Biases..."
     wandb login "$WANDB_KEY"
@@ -86,7 +70,7 @@ else
     warn "Skipping wandb login (no --wandb-key provided)"
 fi
 
-# ─── Step 5: Set Vast.ai API key (optional) ──────────────────────────────────
+# ─── Step 4: Set Vast.ai API key (optional) ──────────────────────────────────
 if [[ -n "$VASTAI_KEY" ]]; then
     info "Setting Vast.ai API key..."
     vastai set api-key "$VASTAI_KEY"
