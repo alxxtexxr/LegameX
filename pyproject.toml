@@ -13,5 +13,6 @@ dependencies = [
     "peft>=0.21.0",
     "tensorboard>=2.21.0",
     "transformers>=5.17.0",
+    "vastai>=1.8.0",
     "wandb>=0.30.0",
 ]
