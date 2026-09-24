@@ -1,4 +1,4 @@
-config_name: "wikipedia-en-2K-s42"
+config_name: "wikipedia-en-2K-s42_RTX3090_e10-lr1e-4"
 
 hydra:
   run:

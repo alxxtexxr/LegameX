@@ -1,4 +1,4 @@
-config_name: "squad-en-15K-s42"
+config_name: "squad-en-15K-s42_RTX3090_lr1e-4"
 
 hydra:
   run:
