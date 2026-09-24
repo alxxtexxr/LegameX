@@ -1,0 +1,57 @@
+config_name: "wikipedia-el-4K-s42_RTX3090"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
+task: "wikipedia"
+lang: "el"
+
+seed: 42
+device: "auto" # "auto" will use the best available device (CUDA > MPS > CPU)
+
+model_id: "FacebookAI/xlm-roberta-base"
+model_name: "XLM-R-Base"
+
+lora:
+  rank: 8
+  alpha: 8
+  dropout: 0.1
+  target_modules: [
+    # Not "all-linear" - exclude "qa_outputs" for QA
+    "query",
+    "key",
+    "value",
+    # Not all "dense" - exclude "lm_head.dense" for MLM
+    "intermediate.dense",
+    "output.dense",
+  ]
+
+data:
+  train_size: 3000
+  val_size: 750
+  mlm_prob: 0.15
+
+train:
+  mini_batch_size: 8
+  grad_accum_steps: 4
+  num_epochs: 3
+  max_steps: null
+  lr: 2e-4
+  lr_scheduler_type: "cosine"
+  optim: "adamw_torch_fused"
+  max_grad_norm: 1.0
+  weight_decay: 0.01
+  warmup_steps: 50
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_steps: 100
+  load_best_model_at_end: true
+  logging_steps: 50
+  report_to: ["tensorboard", "wandb"]
+  push_to_hub: true
+  early_stopping_patience: 3
+
+resume:
+  model_id: null
+  ckpt_step: null
