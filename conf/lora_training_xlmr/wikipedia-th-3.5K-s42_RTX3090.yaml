@@ -10,6 +10,5 @@ defaults:
 
 train:
   mini_batch_size: 8
-  grad_accum_steps: 4
   lr: 2e-4
   optim: "adamw_torch_fused"
