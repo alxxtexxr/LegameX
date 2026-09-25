@@ -1,0 +1,12 @@
+config_name: "wikipedia-el-2K-s42_RTX3090_e5"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
+defaults:
+  - wikipedia-el-2K-s42_RTX3090
+  - _self_
+
+train:
+  num_epochs: 5
