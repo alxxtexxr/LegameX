@@ -1,0 +1,14 @@
+config_name: "wikipedia-tr-3.5K-s42_RTX3090"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
+defaults:
+  - wikipedia-tr-3.5K-s42
+  - _self_
+
+train:
+  mini_batch_size: 8
+  lr: 2e-4
+  optim: "adamw_torch_fused"

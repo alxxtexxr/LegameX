@@ -1,0 +1,19 @@
+config_name: "wikipedia-tr-3.5K-s42_test"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
+defaults:
+  - wikipedia-tr-3.5K-s42
+  - _self_
+
+train:
+  max_steps: 10
+  mini_batch_size: 1
+  grad_accum_steps: 1
+  eval_strategy: "no"
+  load_best_model_at_end: false
+  report_to: "none"
+  push_to_hub: false
+
