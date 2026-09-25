@@ -5,7 +5,7 @@ hydra:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
 
 defaults:
-  - wikipedia-el-4K-s42
+  - wikipedia-el-2K-s42
   - _self_
 
 train:
