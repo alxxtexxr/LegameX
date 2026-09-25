@@ -29,7 +29,7 @@ lora:
 
 data:
   train_size: 4000
-  val_size: 875
+  val_size: 1000
   mlm_prob: 0.15
 
 train:
