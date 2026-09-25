@@ -1,0 +1,15 @@
+config_name: "wikipedia-th-3.5K-s42_test"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
+defaults:
+  - wikipedia-th-3.5K-s42
+  - _self_
+
+train:
+  mini_batch_size: 8
+  grad_accum_steps: 4
+  lr: 2e-4
+  optim: "adamw_torch_fused"

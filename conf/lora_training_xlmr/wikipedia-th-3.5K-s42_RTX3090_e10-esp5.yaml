@@ -1,0 +1,13 @@
+config_name: "wikipedia-th-3.5K-s42_RTX3090_e10-esp5"
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
+
+defaults:
+  - wikipedia-th-3.5K-s42_RTX3090
+  - _self_
+
+train:
+  num_epochs: 10
+  early_stopping_patience: 5
