@@ -30,7 +30,6 @@ lora:
 data:
   train_size: 15000
   val_size: 3750
-  mlm_prob: 0.15
 
 train:
   mini_batch_size: 4

@@ -39,7 +39,7 @@ NUM_CHUNKS_PER_WIKI_ARTICLE = 3
 @hydra.main(
     version_base="1.3",
     config_path="../conf/lora_training_xlmr",
-    config_name="wikipedia-en-10K",
+    config_name="squad-en-15K-s42",
 )
 def main(cfg: DictConfig):
     log = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def main(cfg: DictConfig):
 
     # Resume training configuration
     resume_from_checkpoint = None
-    if resume_from_checkpoint:
+    if cfg.resume.model_id is not None and cfg.resume.ckpt_step is not None:
         model_name = cfg.resume.model_id
         run_name = model_name.split("/")[-1]
         hub_model_id = cfg.resume.model_id
