@@ -5,7 +5,7 @@ hydra:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
 
 defaults:
-  - wikipedia-el-4K-s42_RTX3090
+  - wikipedia-el-4K-s42_RTX3090_e10
   - _self_
 
 train:
