@@ -50,7 +50,7 @@ stop_vastai_instance() {
 
 run_config() {
   local config="$1"
-  echo "=== Running config: $config ==="
+  echo "--- Running configuration: $config ---"
   uv run python src/lora_training_xlmr.py \
     --config-name="$config"
 }
@@ -71,7 +71,7 @@ if [ "$BACKGROUND" = true ]; then
   tmux new-session -d -s "$SESSION_NAME" "
     $CMDS
     echo '---'
-    echo 'All configs finished.'
+    echo 'All configurations finished.'
     $STOP_CMD
     exec bash
   "
@@ -82,6 +82,6 @@ else
     run_config "$config"
   done
   echo "---"
-  echo "All configs finished."
+  echo "All configurations finished."
   stop_vastai_instance
 fi
