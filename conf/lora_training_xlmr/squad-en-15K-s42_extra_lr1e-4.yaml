@@ -1,12 +1,12 @@
-config_name: "wikipedia-el-2K-s42_RTX3090_ws30"
+config_name: "squad-en-15K-s42_extra_lr1e-4"
 
 hydra:
   run:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
 
 defaults:
-  - wikipedia-el-2K-s42_RTX3090
+  - squad-en-15K-s42_extra
   - _self_
 
 train:
-  warmup_steps: 30
+  lr: 1e-4

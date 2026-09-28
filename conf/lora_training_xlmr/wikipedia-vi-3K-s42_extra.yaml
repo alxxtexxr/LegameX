@@ -1,11 +1,11 @@
-config_name: "squad-en-15K-s42_RTX3090"
+config_name: "wikipedia-vi-3K-s42_extra"
 
 hydra:
   run:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
 
 defaults:
-  - squad-en-15K-s42
+  - wikipedia-vi-3K-s42
   - _self_
 
 train:

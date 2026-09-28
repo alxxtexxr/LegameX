@@ -1,12 +1,12 @@
-config_name: "wikipedia-vi-3K-s42_RTX3090_e5"
+config_name: "wikipedia-el-4K-s42_extra_e10"
 
 hydra:
   run:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${config_name}
 
 defaults:
-  - wikipedia-vi-3K-s42_RTX3090
+  - wikipedia-el-4K-s42_extra
   - _self_
 
 train:
-  num_epochs: 5
+  num_epochs: 10
