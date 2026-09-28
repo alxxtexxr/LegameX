@@ -166,7 +166,7 @@ def main(cfg: DictConfig):
         val_size=cfg.data.val_size,
     )
 
-    log.info("Train dataset:")
+    log.info("Training dataset:")
     log.info(train_dataset)
     log.info("")
     log.info("Validation dataset:")
@@ -182,9 +182,8 @@ def main(cfg: DictConfig):
         wiki_max_length=WIKI_MAX_LENGTH,
         num_chunks_per_wiki_article=NUM_CHUNKS_PER_WIKI_ARTICLE,
     )
-
-    if cfg.task == "wikipedia":
-        log.info(f"Total Wikipedia chunks: {len(train_dataset)}")
+    log.info(f"Total preprocessed training samples: {len(train_dataset)}")
+    log.info(f"Total preprocessed validation samples: {len(val_dataset)}")
 
     log.info("")
     log.info("================================================================")
