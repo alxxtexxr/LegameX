@@ -88,7 +88,7 @@ class LegamexLoraModel(nn.Module):
                 )
                 setattr(parent_module, child_name, legamex_module)
                 
-                # Store the LegamexLora module for later weight loading
+                # Store the wrapped module
                 module_name = module_name.replace('.', '__DOT__')
                 self.legamex_modules[module_name] = legamex_module
                 
@@ -97,7 +97,7 @@ class LegamexLoraModel(nn.Module):
                 module_name = module_name.replace('.', '__DOT__')
                 self.legamex_modules[module_name] = module
                 
-        # Freeze all modules, then unfreeze all LegameX-specific modules except the reference LoRA
+        # Freeze all parameters in the base model and unfreeze only the LegameX modules except for the reference LoRA
         self.freeze_all(verbose=False)
         self.unfreeze_legamex_except_ref_lora(verbose=True)
 
@@ -122,7 +122,7 @@ class LegamexLoraModel(nn.Module):
     def unfreeze_legamex_except_ref_lora(self, verbose=False):
         for module_name, module in self.legamex_modules.items():
             if isinstance(module, LegamexLora):
-                # Unfreeze the lora.tfr weights and biases
+                # Unfreeze the transfer LoRA weights and biases
                 module.lora.tfr.A.weight.requires_grad = True # type: ignore
                 module.lora.tfr.B.weight.requires_grad = True # type: ignore
                 if module.lora.tfr.use_bias: # type: ignore
@@ -199,10 +199,11 @@ class LegamexLoraModel(nn.Module):
         else:
             raise ValueError(f"Unknown task type: {task_type}")
         
+        # Load the reference and transfer LoRA configurations
         ref_lora_config = LoraConfig(**config['ref_lora_config'])
         tfr_lora_config = LoraConfig(**config['tfr_lora_config'])
         
-        # Instantiate LegamexLoraModel (wraps the base model)
+        # Re-create the LegameX model
         model = cls(
             base_model=base_model,
             task_type=task_type,
@@ -217,18 +218,17 @@ class LegamexLoraModel(nn.Module):
             gate_use_rslora=config['gate_use_rslora'],
         )
         
-        full_state_dict = torch.load(os.path.join(save_dir, 'legamex.pt'), map_location='cpu')
-
-        for key, tensor in full_state_dict.items():
-            parts = key.split('.', 1) # ['module_name', 'rest.of.path']
+        # Load the LegameX state dict
+        legamex_state_dict = torch.load(os.path.join(save_dir, 'legamex.pt'), map_location='cpu')
+        for k, v in legamex_state_dict.items():
+            parts = k.split('.', 1) # ['module_name', '<rest_of_path>']
             if len(parts) == 2:
                 module_name, param_name = parts
                 module = model.legamex_modules.get(module_name)
                 if module is not None:
-                    # Look up the parameter inside the module using a flat dict
                     param = dict(module.named_parameters()).get(param_name)
                     if param is not None:
-                        param.data.copy_(tensor)
+                        param.data.copy_(v)
         
         return model
 
@@ -236,10 +236,11 @@ class LegamexLoraModel(nn.Module):
     def save_pretrained(self, save_dir):
         # Create save directories
         os.makedirs(save_dir, exist_ok=True)
+        
         tfr_dir = os.path.join(save_dir, 'tfr')
         os.makedirs(tfr_dir, exist_ok=True)
         
-        # Store theLegameX and transfer state dicts
+        # Store the LegameX and transfer component state dicts
         state_dict = {}
         tfr_state_dict = {}
         
@@ -249,7 +250,7 @@ class LegamexLoraModel(nn.Module):
                 if 'base_module' in param_name:
                     continue
                 
-                # Store the rest of parameters in LegameX state dict
+                # Store the rest of parameters in the LegameX state dict
                 full_param_name = f'{module_name}.{param_name}'
                 param_cpu = param.detach().cpu()
                 state_dict[full_param_name] = param_cpu
@@ -259,7 +260,7 @@ class LegamexLoraModel(nn.Module):
                     full_param_name_sanitized = full_param_name.replace('__DOT__', '.').replace('lora.tfr.', 'lora_')
                     tfr_param_cpu = param_cpu
 
-                    # If the parameter is the lora.tfr weight, merge it with the gate complement weight
+                    # If the parameter is a transfer component weight, apply the gate complement weight to it
                     if 'lora.tfr' in param_name and 'weight' in param_name:
                         gate_weight_name = param_name.replace('lora.tfr', 'gate')
                         
@@ -271,14 +272,14 @@ class LegamexLoraModel(nn.Module):
                         except AttributeError:
                             raise AttributeError(
                                 f"Could not find matching gate weight component '{gate_weight_name}' "
-                                f"in module '{module_name}' to pair with transfer weights."
+                                f"in module '{module_name}' to pair with transfer component weights."
                             )
                         
                     tfr_state_dict[full_param_name_sanitized] = tfr_param_cpu
                     
         torch.save(state_dict, os.path.join(save_dir, 'legamex.pt'))
         
-        # Save the transfer state dict and its configuration
+        # Save the transfer component state dict and its configuration
         save_file(tfr_state_dict, os.path.join(tfr_dir, 'adapter_model.safetensors'))
         with open(os.path.join(tfr_dir, 'adapter_config.json'), 'w') as f:
             json.dump(self._json_safe(self.tfr_lora_config.to_dict()), f, indent=4)
