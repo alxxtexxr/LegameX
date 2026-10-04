@@ -122,7 +122,7 @@ class LegamexLoraModel(nn.Module):
     def unfreeze_legamex_except_ref_lora(self, verbose=False):
         for module_name, module in self.legamex_modules.items():
             if isinstance(module, LegamexLora):
-                # Unfreeze lora.tfr weights and biases
+                # Unfreeze the lora.tfr weights and biases
                 module.lora.tfr.A.weight.requires_grad = True # type: ignore
                 module.lora.tfr.B.weight.requires_grad = True # type: ignore
                 if module.lora.tfr.use_bias: # type: ignore
@@ -131,7 +131,7 @@ class LegamexLoraModel(nn.Module):
                     if hasattr(module.lora.tfr.B, 'bias') and module.lora.tfr.B.bias is not None: # type: ignore
                         module.lora.tfr.B.bias.requires_grad = True # type: ignore
                 
-                # Unfreeze gate weights and biases
+                # Unfreeze the gate weights and biases
                 module.gate.A.weight.requires_grad = True # type: ignore
                 module.gate.B.weight.requires_grad = True # type: ignore
                 if module.gate.use_bias:
@@ -140,7 +140,7 @@ class LegamexLoraModel(nn.Module):
                     if hasattr(module.gate.B, 'bias') and module.gate.B.bias is not None: # type: ignore
                         module.gate.B.bias.requires_grad = True # type: ignore
 
-            # Unfreeze qa_outputs weight and bias if task_type is 'QUESTION_ANS'
+            # Unfreeze the qa_outputs weight and bias if task_type is 'QUESTION_ANS'
             elif isinstance(module, nn.Linear) and 'qa_outputs' in module_name and self.task_type == 'QUESTION_ANS':    
                 module.weight.requires_grad = True
                 if hasattr(module, 'bias') and module.bias is not None:
@@ -185,11 +185,11 @@ class LegamexLoraModel(nn.Module):
 
     @classmethod
     def from_pretrained(cls, save_dir, **kwargs):
-        # Load LegameX configuration
+        # Load the LegameX configuration
         with open(os.path.join(save_dir, 'legamex_config.json'), 'r') as f:
             config = json.load(f)
             
-        # Recreate base model
+        # Re-create the base model
         base_model_id = config['base_model_name_or_path']
         task_type = config['task_type']
         if task_type == 'QUESTION_ANS':
@@ -202,7 +202,7 @@ class LegamexLoraModel(nn.Module):
         ref_lora_config = LoraConfig(**config['ref_lora_config'])
         tfr_lora_config = LoraConfig(**config['tfr_lora_config'])
         
-        # Instantiate LegamexLoraModel (wraps base model)
+        # Instantiate LegamexLoraModel (wraps the base model)
         model = cls(
             base_model=base_model,
             task_type=task_type,
@@ -225,7 +225,7 @@ class LegamexLoraModel(nn.Module):
                 module_name, param_name = parts
                 module = model.legamex_modules.get(module_name)
                 if module is not None:
-                    # Look up parameter inside module using a flat dict
+                    # Look up the parameter inside the module using a flat dict
                     param = dict(module.named_parameters()).get(param_name)
                     if param is not None:
                         param.data.copy_(tensor)
@@ -239,13 +239,13 @@ class LegamexLoraModel(nn.Module):
         tfr_dir = os.path.join(save_dir, 'tfr')
         os.makedirs(tfr_dir, exist_ok=True)
         
-        # Store LegameX and transfer state dicts
+        # Store theLegameX and transfer state dicts
         state_dict = {}
         tfr_state_dict = {}
         
         for module_name, module in self.legamex_modules.items():
             for param_name, param in module.named_parameters():
-                # Skip base_module parameters
+                # Skip the base_module parameters
                 if 'base_module' in param_name:
                     continue
                 
@@ -254,12 +254,12 @@ class LegamexLoraModel(nn.Module):
                 param_cpu = param.detach().cpu()
                 state_dict[full_param_name] = param_cpu
                 
-                # Store transfer component and qa_outputs parameters separately
+                # Store the transfer component and qa_outputs parameters separately
                 if 'lora.tfr' in param_name or 'qa_outputs' in module_name:
                     full_param_name_sanitized = full_param_name.replace('__DOT__', '.').replace('lora.tfr.', 'lora_')
                     tfr_param_cpu = param_cpu
 
-                    # If parameter is lora.tfr weight, merge it with gate complement weight
+                    # If the parameter is the lora.tfr weight, merge it with the gate complement weight
                     if 'lora.tfr' in param_name and 'weight' in param_name:
                         gate_weight_name = param_name.replace('lora.tfr', 'gate')
                         
