@@ -7,7 +7,7 @@ __*__/
 eval/
 outputs*/
 logs/
-wandb/
+wandb*/
 *.md
 *.local.*
 *.custom.*
