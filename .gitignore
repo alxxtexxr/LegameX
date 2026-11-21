@@ -8,6 +8,7 @@ eval/
 outputs*/
 logs/
 wandb*/
+forensics*/
 *.md
 *.local.*
 *.custom.*
